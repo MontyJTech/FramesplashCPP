@@ -399,3 +399,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+#OpenCV Dll
+FrameSplashCpp/opencv_world460d.dll
