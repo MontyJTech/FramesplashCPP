@@ -9,6 +9,10 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <execution>  // For std::execution::par
+#include <atomic>
+#include <limits> // for std::numeric_limits
+
 #include "PixelManager.h"
 #include "PerlinReader.h"
 
@@ -23,6 +27,8 @@ private:
 	const int ix[8] = {0, -1, -1, -1, 0, 1, 1, 1};
 	const int iy[8] = {1, 1, 0, -1, -1, -1, 0, 1};
 
+
+
 	Colour* colourStack;
 	Pixel* fullGrid;
 	PixelDentch* fullDentchGrid;
@@ -34,7 +40,8 @@ private:
 	PerlinReader perlinReader;
 	bool PERLIN = false;
 	bool TEMPLATE = false;
-	bool AVERAGE = true;
+	bool AVERAGE = false;
+	bool PARALLEL = false;
 
 	int HEIGHT;
 	int WIDTH;
@@ -62,7 +69,7 @@ private:
 	void printAvailable(std::string msg = "");
 	void printMemoryAddress(Pixel *px, std::string msg = "");
 
-	void parallel_minDiff(Colour toCompare, int startIndex, int endIndex, std::pair<int, int> &results, int threadId);
+	PixelDentch* parallel_AvgMinDiff(Colour toCompare, int i);
 
 	Pixel* findMinDiff(Colour toCompare, int i);
 	PixelDentch* findMinDiffDentch(Colour toCompare, int i);

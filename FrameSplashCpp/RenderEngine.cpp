@@ -1,5 +1,6 @@
 #include "RenderEngine.h"
 
+
 void RenderEngine::init(int h, int w, Colour* stack, std::string inputType) {
 	HEIGHT = h;
 	WIDTH = w;
@@ -113,11 +114,7 @@ PixelDentch* RenderEngine::findMinDiffDentch(Colour toCompare, int i) {
 		int curMinPtr = 0;
 		for (PixelDentch* wham : dentchAvailArray) {
 			for (int i = 0; i < 8; i++) {
-				if (wham->neighbors[i] != 0) //if neightbour isn't empty, continue
-				{
-					continue;
-				}
-				else 
+				if (wham->neighbors[i] != 0) //if neighbour is empty, continue
 				{
 					int nx = wham->x + dx[i];
 					int ny = wham->y + dy[i];
@@ -150,18 +147,12 @@ PixelDentch* RenderEngine::findAverageMinDiffDentch(Colour toCompare, int i) {
 		int curMinPtr = 0;
 		int colourDiff = 0;
 
-		Colour minDiffColourReference = Colour();
-
 		for (PixelDentch* wham : dentchAvailArray) {
 			int count = 0;
 			Colour avgColour;
 			colourDiff = 0;
 			for (int i = 0; i < 8; i++) {
-				if (wham->neighbors[i] == 0) //if neightbour isn't empty, continue
-				{
-					continue;
-				}
-				else
+				if (wham->neighbors[i] != 0) //if neightbour is empty, continue
 				{
 					int nx = wham->x + dx[i];
 					int ny = wham->y + dy[i];
@@ -175,26 +166,64 @@ PixelDentch* RenderEngine::findAverageMinDiffDentch(Colour toCompare, int i) {
 					}
 					count++;
 				}
-				avgColour.r /= count;
-				avgColour.g /= count;
-				avgColour.b /= count;
+				if (count > 0) {
+					avgColour.r /= count;
+					avgColour.g /= count;
+					avgColour.b /= count;
+				}
 
 				colourDiff = colourDifference(avgColour, toCompare);
 				if (colourDiff < curMinValue || curMinValue < 0) {
 					curMinValue = colourDiff;
 					curMinPtr = wham->index;
-					minDiffColourReference = avgColour;
+				}
+				if (colourDiff == 0) {
+					return dentchAvailArray[curMinPtr];
 				}
 			}
-			if (colourDiff == 0) {
-				return dentchAvailArray[curMinPtr];
-			}
 		}
-		if (colourDifference(minDiffColourReference, toCompare) > 2000) {
-			std::cout << "colour debug: " << colourDifference(minDiffColourReference, toCompare) << std::endl;
-		}
+
 		return dentchAvailArray[curMinPtr];
 	}
+}
+
+//12 minutes 5 seconds 1000x1000
+PixelDentch* RenderEngine::parallel_AvgMinDiff(Colour toCompare, int i) {
+	if (i == 0) {
+		PixelDentch* tempRef = &fullDentchGrid[start_x + (start_y * WIDTH)];
+		addToAvailArrayDentch(tempRef);
+
+		return tempRef;
+	}
+
+	std::atomic<int> curAtomicMinValue{ std::numeric_limits<int>::max() };
+	std::atomic<int> curAtomicMinPtr{ 0 };
+
+	std::for_each(std::execution::par, dentchAvailArray.begin(), dentchAvailArray.end(),
+		[&](PixelDentch* wham) {
+			for (int i = 0; i < 8; i++) {
+				if (wham->neighbors[i] != 0) {
+					int nx = wham->x + dx[i];
+					int ny = wham->y + dy[i];
+
+					if (nx >= 0 && nx < WIDTH && ny >= 0 && ny < HEIGHT) {
+						int neighborIndex = nx + ny * WIDTH;
+						int colourDiff = colourDifference(fullDentchGrid[neighborIndex].col, toCompare);
+
+						int curVal = curAtomicMinValue.load(std::memory_order_relaxed);
+						while (colourDiff < curVal && !curAtomicMinValue.compare_exchange_weak(curVal, colourDiff, std::memory_order_relaxed)) {
+							// retry if another thread already updated with a closer match
+						}
+
+						if (colourDiff == curAtomicMinValue.load(std::memory_order_relaxed)) {
+							curAtomicMinPtr.store(wham->index, std::memory_order_relaxed);
+						}
+					}
+				}
+			}
+		});
+
+	return dentchAvailArray[curAtomicMinPtr];
 }
 
 PixelDentch* RenderEngine::bestByPerlin(PixelDentch* px, Colour toCompare) {
@@ -335,7 +364,10 @@ void RenderEngine::runMainLoop() {
 		}
 		PixelDentch* curPXD;
 
-		if (AVERAGE) {
+		if (PARALLEL) {
+			curPXD = parallel_AvgMinDiff(colourStack[i], i);
+		}
+		else if (AVERAGE) {
 			curPXD = findAverageMinDiffDentch(colourStack[i], i);
 		}
 		else {

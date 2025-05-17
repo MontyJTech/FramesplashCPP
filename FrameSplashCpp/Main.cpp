@@ -3,8 +3,8 @@
 #include "RenderEngine.h"
 
 //4k: 3840x2160
-const int WIDTH = 3840;
-const int HEIGHT = 2160;
+const int WIDTH = 1000;
+const int HEIGHT = 1000;
 int main() {
 
 	//1. if working with video, convert to frames.
