@@ -4,12 +4,14 @@
 Framesplash is my own C++ implementation of Jozsef Fejes' [Rainbow Smoke](https://www.youtube.com/watch?v=OuvFsB4SLhA) algorithm. 
 In this project, I built upon Fejes' original idea of 'painting' the full 8-bit colour spectrum onto a canvas by placing each colour pixel next to it's closest neighbours. 
 
+
 ## Features
 
 - Custom colour palette generation via video/ image input preprocessing. 
 - Perlin noise generation and integration. 
 - Multi-thread processing.
 - Custom 'shape' templating.
+
 
 ## Demo Outputs
 
@@ -33,9 +35,18 @@ In this project, I built upon Fejes' original idea of 'painting' the full 8-bit 
 
 *Rainbow smoke using multithreading.*
 
+
 ## Usage
 To do: Start using the application straight away via command line interface.
 To do: Working with the project code.
+
+
+## Limitations & Future Improvements
+To do.
+
+### Potential improvements:
+To do.
+
 
 ## License
 To do.
