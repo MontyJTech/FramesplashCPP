@@ -1,6 +1,7 @@
 enum ColourPreprocessing {
-	NONE, //Dataset of sequential colour values as they are loaded
-	RANDOM_SHUFFLE //Dataset of randomly ordered colour values 
+	NONE, 
+	RANDOM_SHUFFLE,
+	WEIGHTED
 };
 
 enum ColourDataType {

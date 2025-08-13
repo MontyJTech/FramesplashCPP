@@ -37,9 +37,9 @@ private:
 	PixelManager pxMgr;
 	PerlinReader perlinReader;
 	bool PERLIN = true;
-	bool TEMPLATE = true;
+	bool TEMPLATE = false;
 	bool AVERAGE = false;
-	bool PARALLEL = true;
+	bool PARALLEL = false;
 
 	bool STACKING_RESLUTION = false;
 	const int STACK_LAYERS = 4;

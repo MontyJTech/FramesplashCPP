@@ -20,6 +20,10 @@ struct Colour {
 		this->g = 0;
 		this->b = 0;
 	}
+
+	bool operator==(Colour col){
+		return col.r == this->r && col.g == this->g && col.b == this->b;
+	}
 };
 
 struct Pixel {

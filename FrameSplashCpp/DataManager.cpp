@@ -3,11 +3,11 @@
 DataManager::DataManager() {
 }
 
-void DataManager::randomiseParsedColours(size_t size, size_t blockSize) {
+void DataManager::RandomiseParsedColours(size_t size, size_t blockSize) {
     std::shuffle(parsedColourData, parsedColourData+size, std::default_random_engine(0));
 }
 
-void DataManager::initColourCube() {
+void DataManager::InitColourCube() {
     std::cout << "Generating Colour Cube.." << std::endl;
     for (int i = 0; i < 256; ++i) {
         colourCube[i] = new unsigned int* [256];
@@ -25,7 +25,7 @@ void DataManager::initColourCube() {
     }
 }
 
-void DataManager::videoToFrames() {
+void DataManager::VideoToFrames() {
     cv::Mat frame;
     cv::VideoCapture cap(dataBankDir + "\\Assets\\video.mp4");
     if (!cap.isOpened())
@@ -48,7 +48,7 @@ void DataManager::videoToFrames() {
     }
 }
 
-void DataManager::parseFrame(Mat frame) {
+void DataManager::ParseFrame(Mat frame) {
     for (int y = 0; y < frame.rows; y++) {
         for (int x = 0; x < frame.cols; x++) {
             int b = frame.data[frame.channels() * (frame.cols * y + x) + 0];
@@ -59,16 +59,16 @@ void DataManager::parseFrame(Mat frame) {
     }
 }
 
-void DataManager::framesToData() {
+void DataManager::FramesToData() {
     //for every frame in the directory, iterate through the pixels of the frame and add them to the 3D array.
     //Probably a GPU thing.
     int numFrames = 48248;
     int frameCounter = 0;
-    initColourCube();
+    InitColourCube();
     for (int i = 0; i < numFrames; i++) {
         try {
             Mat img = imread(dataBankDir + "\\Assets\\frames\\frame" + std::to_string(i) + ".png", IMREAD_COLOR);
-            parseFrame(img);
+            ParseFrame(img);
             if (i % 100 == 0) {
                 std::cout << "Parsing frame " << i << "/" << numFrames << "..." << "\r";
             }
@@ -88,7 +88,7 @@ void DataManager::framesToData() {
     }
 }
 
-void DataManager::exportData() {
+void DataManager::ExportData() {
     //save the colour cube to a txt file.
     std::ofstream out(dataBankDir + "\\Data\\data.txt");
     std::string dataPoint;
@@ -112,7 +112,7 @@ void DataManager::exportData() {
     out.close();
 }
 
-Colour DataManager::parseColourInput(std::string c) {
+Colour DataManager::ParseColourStringFromFile(std::string c) {
     try
     {
         int indexStart = c.find('(') + 1;
@@ -130,7 +130,7 @@ Colour DataManager::parseColourInput(std::string c) {
             getline(ss, substr, ',');
             result.push_back(substr);
         }
-        //string colors = colorData.Split('\u002C');
+
         Colour col = Colour(std::stoi(result[0]), std::stoi(result[1]), std::stoi((result[2])));
         return col;
     }
@@ -141,7 +141,7 @@ Colour DataManager::parseColourInput(std::string c) {
     }
 }
 
-std::pair<Colour, int> DataManager::parseColourInputWithOccurance(std::string c) {
+std::pair<Colour, int> DataManager::ParseColourInputWithOccurance(std::string c) {
     try
     {
         int indexStart = c.find('(') + 1;
@@ -174,9 +174,55 @@ std::pair<Colour, int> DataManager::parseColourInputWithOccurance(std::string c)
     }
 }
 
-Colour* DataManager::importDataByWeight(int height, int width) {
+Colour* DataManager::ImportDataFromFile(int height, int width, ColourPreprocessing preprocessing) {
+    switch (preprocessing) {
+        case ColourPreprocessing::NONE:
+            return ImportDataAsRaw(height, width);
+        case ColourPreprocessing::RANDOM_SHUFFLE:
+            return ImportShuffledData(height, width);
+        case ColourPreprocessing::WEIGHTED:
+            return ImportWeightedData(height, width);
+        default:
+            return ImportShuffledData(height, width);
+    }
+}
+
+Colour* DataManager::ImportDataAsRaw(int height, int width) {
     try {
         std::ifstream file(dataBankDir + "\\Data\\data.txt");
+        if (!file) {
+            std::cerr << "Failed to open file.\n";
+            return nullptr;
+        }
+
+        std::string colourInfo;
+        parsedColourData = new Colour[width * height];
+        int coloursCount = 0;
+
+        while (std::getline(file, colourInfo)) {
+            if (colourInfo.find("RGB") != std::string::npos) {
+                std::pair<Colour, int> result = ParseColourInputWithOccurance(colourInfo);
+                for (int i = 0; i < result.second; i++) {
+                    if (coloursCount == width * height) {
+                        return parsedColourData;
+                    }
+                    parsedColourData[coloursCount] = result.first;
+                    coloursCount++;
+                }
+            }
+        }
+
+        return parsedColourData;
+    }
+    catch (Exception e) {
+        std::cout << "Error reading file." << std::endl;
+        std::cout << e.msg << std::endl;
+    }
+}
+
+Colour* DataManager::ImportShuffledData(int height, int width) {
+    try {
+        std::ifstream file(dataBankDir + "\\Data\\data.txt"); //Fix this to not be hardcoded.
         if (!file) {
             std::cerr << "Failed to open file.\n";
             return nullptr;
@@ -187,10 +233,9 @@ Colour* DataManager::importDataByWeight(int height, int width) {
         size_t totalCount = 0;
         size_t canvasCount = width * height;
 
-        // First pass: Count total number of occurrences
         while (std::getline(file, colourInfo)) {
             if (colourInfo.find("RGB") != std::string::npos) {
-                auto result = parseColourInputWithOccurance(colourInfo);
+                auto result = ParseColourInputWithOccurance(colourInfo);
                 if (result.second > 0) {
                     colourCounts.emplace_back(result.first, result.second);
                     totalCount += result.second;
@@ -198,25 +243,16 @@ Colour* DataManager::importDataByWeight(int height, int width) {
             }
         }
 
-        assert(totalCount >= height * width);
-
         parsedColourData = new Colour[height * width];
-
-        // Allocate memory only once
-        NumIndividualColours = totalCount;
-
-        std::cout << "Num Colours: " << NumIndividualColours << std::endl;
-        std::cout << "Recommended resolution: " << sqrt(NumIndividualColours) << std::endl;
-
 
         int pointer = 0;
 
         std::random_device rd;
-        std::mt19937 gen(rd()); // Mersenne Twister engine
-        std::cout << std::endl;
+        std::mt19937 gen(rd());
+        std::cout << "\n";
 
         while (pointer < canvasCount) {
-            std::uniform_int_distribution<uint64_t> distrib(1, NumIndividualColours);
+            std::uniform_int_distribution<uint64_t> distrib(1, totalCount);
             uint64_t random_number = distrib(gen) - 1;
 
             uint64_t counter = 0;
@@ -232,6 +268,7 @@ Colour* DataManager::importDataByWeight(int height, int width) {
             if (pointer % 1000 == 0) {
                 std::cout << "\rRandom pick: " << std::to_string(((float)pointer / (float)canvasCount) * 100.f) << "%";
             }
+
             parsedColourData[pointer] = colourCounts[ptr].first;
             pointer++;
         }
@@ -244,9 +281,9 @@ Colour* DataManager::importDataByWeight(int height, int width) {
     }
 }
 
-Colour* DataManager::importDataAsRaw(int height, int width) {
+Colour* DataManager::ImportWeightedData(int height, int width) {
     try {
-        std::ifstream file(dataBankDir + "\\Data\\data.txt");
+        std::ifstream file(dataBankDir + "\\Data\\data.txt"); //Fix this to not be hardcoded.
         if (!file) {
             std::cerr << "Failed to open file.\n";
             return nullptr;
@@ -254,46 +291,55 @@ Colour* DataManager::importDataAsRaw(int height, int width) {
 
         std::string colourInfo;
         std::vector<std::pair<Colour, int>> colourCounts;
-        size_t totalCount = 0;
+        size_t fileColoursCount = 0;
+        size_t canvasSize = width * height;
 
-        // First pass: Count total number of occurrences
         while (std::getline(file, colourInfo)) {
             if (colourInfo.find("RGB") != std::string::npos) {
-                auto result = parseColourInputWithOccurance(colourInfo);
+                auto result = ParseColourInputWithOccurance(colourInfo);
                 if (result.second > 0) {
-                    colourCounts.emplace_back(result.first, result.second);
-                    totalCount += result.second;
+                    colourCounts.push_back(result);
+                    fileColoursCount += result.second;
                 }
             }
         }
 
-        assert(totalCount >= height * width);
+        std::cout << "Read file successfully. \n";
 
-        // Allocate memory only once
-        parsedColourData = new Colour[totalCount];
-        NumIndividualColours = totalCount;
-        size_t* shuffledIndices = new size_t[totalCount];
-        for (size_t i = 0; i < totalCount; i++)
-        {
-            shuffledIndices[i] = i;
-        }
-        std::cout << "Num Colours: " << NumIndividualColours << std::endl;
-        std::cout << "Recommended resolution: " << sqrt(NumIndividualColours) << std::endl;
+        parsedColourData = new Colour[canvasSize];
 
-        std::cout << "Shuffling indices.." << std::endl;
-        std::shuffle(shuffledIndices, shuffledIndices + totalCount, std::default_random_engine(0));
+        auto max_it = std::max_element(colourCounts.begin(), colourCounts.end(),
+            [](const auto& a, const auto& b) {
+                return a.second < b.second;
+            }
+        );
+        int maxColourIndex = std::distance(colourCounts.begin(), max_it);
 
-        std::cout << "Shuffled. Populating Array..." << std::endl;
-
-        int pointer = 0;
-        // Second pass: Populate the array
-        for (const auto& [colour, count] : colourCounts) {
-            for (int i = 0; i < count; ++i) {
-                parsedColourData[shuffledIndices[pointer]] = colour;
-                pointer++;
+        
+        int addedColoursCount = 0;
+        for (int i = colourCounts.size()-1; i >= 0; i--) {
+            if (i == maxColourIndex) {
+                continue;
+            }
+            float colourRatio = (float)colourCounts[i].second / (float)fileColoursCount;
+            int numOccurances = colourRatio * (float)canvasSize;
+            //if (numOccurances == 0)
+            //    numOccurances++;
+            while (numOccurances-- > 0) {
+                parsedColourData[addedColoursCount] = colourCounts[i].first;
+                addedColoursCount++;
+                if (addedColoursCount % 1000 == 0) std::cout << "\rAdding colours: " << std::to_string(((float)addedColoursCount / (float)canvasSize) * 100.f) << "%";
             }
         }
+        assert(addedColoursCount < canvasSize);
 
+        while (addedColoursCount < canvasSize) {
+            parsedColourData[addedColoursCount] = colourCounts[maxColourIndex].first;
+            addedColoursCount++;
+            if (addedColoursCount % 1000 == 0) std::cout << "\rAdding colours: " << std::to_string(((float)addedColoursCount / (float)canvasSize) * 100.f) << "%";
+        }
+
+        std::cout << "\nDone loading colours. \n";
         return parsedColourData;
     }
     catch (Exception e) {
@@ -303,7 +349,7 @@ Colour* DataManager::importDataAsRaw(int height, int width) {
 }
 
 //4096 x 4096 at full colour spectrum - 16,777,216 colours
-Colour* DataManager::getDefaultRGBData(int height, int width, ColourPreprocessing preprocessingType) {
+Colour* DataManager::GetDefaultRGBData(int height, int width, ColourPreprocessing preprocessingType) {
     size_t size = height * width;
 
     int colourCubeIndex = std::cbrt(size);
@@ -340,7 +386,7 @@ Colour* DataManager::getDefaultRGBData(int height, int width, ColourPreprocessin
     return arr;
 }
 
-Colour* DataManager::getCustomRGBData(int height, int width, ColourPreprocessing preprocessingType) {
+Colour* DataManager::GetCustomRGBData(int height, int width, ColourPreprocessing preprocessingType) {
     size_t size = height * width;
     Colour* arr = new Colour[size];
 
@@ -362,19 +408,19 @@ Colour* DataManager::getCustomRGBData(int height, int width, ColourPreprocessing
     return arr;
 }
 
-Colour* DataManager::getParsedData(int height, int width, ColourDataType type, ColourPreprocessing preprocessing) {
+Colour* DataManager::GetParsedData(int height, int width, ColourDataType type, ColourPreprocessing preprocessing) {
     switch (type) {
         case ColourDataType::RGB:
-            parsedColourData = getDefaultRGBData(height, width, preprocessing);
+            parsedColourData = GetDefaultRGBData(height, width, preprocessing);
             break;
         case ColourDataType::RGB_CUSTOM:
-            parsedColourData = getCustomRGBData(height, width, preprocessing);
+            parsedColourData = GetCustomRGBData(height, width, preprocessing);
             break;
         case ColourDataType::LOADED:
-            parsedColourData = importDataByWeight(height, width);
+            parsedColourData = ImportDataFromFile(height, width, preprocessing);
             break;
         default:
-            parsedColourData = getDefaultRGBData(height, width, ColourPreprocessing::NONE);
+            parsedColourData = GetDefaultRGBData(height, width, ColourPreprocessing::NONE);
             break;
     }
 

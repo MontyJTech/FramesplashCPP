@@ -22,28 +22,32 @@ using namespace cv;
 
 class DataManager {
 private:
-	std::string dataBankDir = "D:\\CodingProjects\\FrameSplashCpp\\FrameSplashCpp\\x64\\Debug\\render";
+	std::string dataBankDir = "D:\\CodingProjects\\FrameSplashCpp\\FrameSplashCpp\\x64\\Debug\\render"; //Fix this to not be hardcoded.
 	unsigned int*** colourCube = new unsigned int** [256];
 	Colour* parsedColourData;
 	std::vector<Colour> parsedColourVector;
 
-	void initColourCube();
-	void parseFrame(cv::Mat frame);
-	Colour parseColourInput(std::string c);
-	std::pair<Colour, int> parseColourInputWithOccurance(std::string c);
-	Colour* getDefaultRGBData(int height, int width, ColourPreprocessing preprocessingType);
-	Colour* getCustomRGBData(int height, int width, ColourPreprocessing preprocessingType);
-	void randomiseParsedColours(size_t size, size_t blockSize = 10000);
+	void InitColourCube();
+	void ParseFrame(cv::Mat frame);
+	
+	Colour* GetDefaultRGBData(int height, int width, ColourPreprocessing preprocessingType);
+	Colour* GetCustomRGBData(int height, int width, ColourPreprocessing preprocessingType);
+	void RandomiseParsedColours(size_t size, size_t blockSize = 10000);
 public:
 	DataManager();
-	void videoToFrames();
-	void framesToData();
-	void exportData();
-	Colour* importDataAsRaw(int height, int width);
-	Colour* importDataByWeight(int height, int width);
-	Colour* getParsedData(int height, int width, ColourDataType type, ColourPreprocessing preprocessing);
+	void VideoToFrames();
+	void FramesToData();
+	void ExportData();
+	Colour* ImportDataAsRaw(int height, int width);
+	Colour* ImportShuffledData(int height, int width);
+	Colour* ImportWeightedData(int height, int width);
+	
+	
+	Colour* ImportDataFromFile(int height, int width, ColourPreprocessing preprocessing);
 
-	size_t NumIndividualColours = 0;
+	Colour* GetParsedData(int height, int width, ColourDataType type, ColourPreprocessing preprocessing);
+	Colour ParseColourStringFromFile(std::string c);
+	std::pair<Colour, int> ParseColourInputWithOccurance(std::string c);
 };
 
 #endif

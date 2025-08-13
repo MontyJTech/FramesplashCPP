@@ -15,7 +15,7 @@ int main() {
 
 	//Colour* stack = dataMgr.getParsedData(HEIGHT, WIDTH, "file");
 	std::cout << "Loading Data..." << std::endl;
-	Colour* stack = dataMgr.getParsedData(HEIGHT, WIDTH, ColourDataType::LOADED, ColourPreprocessing::RANDOM_SHUFFLE);
+	Colour* stack = dataMgr.GetParsedData(HEIGHT, WIDTH, ColourDataType::LOADED, ColourPreprocessing::WEIGHTED);
 	renderEng.init(HEIGHT, WIDTH, stack);
 	renderEng.runMainLoop();
 	

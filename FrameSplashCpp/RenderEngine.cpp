@@ -17,8 +17,8 @@ void RenderEngine::init(int h, int w, Colour* stack, std::string inputType) {
 
 	if (PERLIN) { perlinReader.generate(HEIGHT, WIDTH); }
 
-	start_x = 0;
-	start_y = 0;
+	start_x = WIDTH / 2;
+	start_y = HEIGHT / 2;
 }
 
 void RenderEngine::initStackedCanvas(int multiplier) {
