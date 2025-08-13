@@ -5,11 +5,11 @@
 #include <cstdint>
 
 struct Colour {
-	int r;
-	int g;
-	int b;
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
 
-	Colour(int r, int g, int b) {
+	Colour(uint8_t r, uint8_t g, uint8_t b) {
 		this->r = r;
 		this->g = g;
 		this->b = b;

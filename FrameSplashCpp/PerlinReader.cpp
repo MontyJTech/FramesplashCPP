@@ -8,6 +8,7 @@
 
 void PerlinReader::generate(int height, int width) {
     perlinImage = cv::Mat(height, width, CV_32FC1);
+    cv::Mat perlinCpy = cv::Mat(height, width, CV_8UC3);
 
     initializePermutation();  // Generate permutation table
 
@@ -20,8 +21,14 @@ void PerlinReader::generate(int height, int width) {
             float ny = y * scale;
             float noiseValue = perlin(nx, ny);
             perlinImage.at<float>(y, x) = (noiseValue + 1.0f) * 0.5f; // Normalize to [0,1]
+
+            perlinCpy.at<cv::Vec3b>(y, x)[0] = 255.f * ((noiseValue + 1.0f) * 0.5f);
+            perlinCpy.at<cv::Vec3b>(y, x)[1] = 255.f * ((noiseValue + 1.0f) * 0.5f);
+            perlinCpy.at<cv::Vec3b>(y, x)[2] = 255.f * ((noiseValue + 1.0f) * 0.5f);
         }
     }
+
+    cv::imwrite("D:\\CodingProjects\\FrameSplashCpp\\FrameSplashCpp\\x64\\Debug\\render\\perlin.jpg", perlinCpy);
 }
 
 void PerlinReader::initializePermutation() {
@@ -42,10 +49,15 @@ float PerlinReader::lerp(float t, float a, float b) {
 }
 
 float PerlinReader::grad(int hash, float x, float y) {
-    int h = hash & 7;       // Convert low 3 bits of hash code
-    float u = h < 4 ? x : y;
-    float v = h < 4 ? y : x;
-    return ((h & 1) ? -u : u) + ((h & 2) ? -2.0f * v : 2.0f * v);
+    int h = hash & 3;  // Only need 4 gradient directions
+    float u = (h & 1) ? -x : x;
+    float v = (h & 2) ? -y : y;
+    return u + v;
+
+    //int h = hash & 7;       // Convert low 3 bits of hash code
+    //float u = h < 4 ? x : y;
+    //float v = h < 4 ? y : x;
+    //return ((h & 1) ? -u : u) + ((h & 2) ? -2.0f * v : 2.0f * v);
 }
 
 float PerlinReader::perlin(float x, float y) {
@@ -70,7 +82,7 @@ float PerlinReader::perlin(float x, float y) {
 
 float PerlinReader::getNoiseValue(int x, int y) {
     float col = perlinImage.data[perlinImage.channels() * (perlinImage.cols * y + x) + 0];
-	return col / 255;
+	return col / 255.f;
 }
 
 std::pair<int, int>  PerlinReader::getOffsetCoords(int x, int y) {

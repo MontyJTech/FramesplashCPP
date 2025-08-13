@@ -1,39 +1,45 @@
 # Framesplash
 ## Overview
 
-Framesplash is my own C++ implementation of Jozsef Fejes' [Rainbow Smoke](https://www.youtube.com/watch?v=OuvFsB4SLhA) algorithm. 
+Framesplash is my own (work in progress) C++ implementation of Jozsef Fejes' [Rainbow Smoke](https://www.youtube.com/watch?v=OuvFsB4SLhA) algorithm. 
 In this project, I built upon Fejes' original idea of 'painting' the full 8-bit colour spectrum onto a canvas by placing each colour pixel next to it's closest neighbours. 
 
 
 ## Features
 
-- Custom colour palette generation via video/ image input preprocessing. 
+- Custom colour palette generation via video/ image input.
+- Custom colour data preprocessing options (Sequencial/ randomised/ weighted inputs). 
 - Perlin noise generation and integration. 
-- Multi-thread processing.
-- Custom 'shape' templating.
-
+- Origin point templating.
+- 'Stacking Resolution' option.
+- (wip) Multi-threaded processing.
 
 ## Demo Outputs
 
-![to-do](to-do.gif)
+*Base rainbow smoke algorithm output - 8-bit colour spectrum. Preprocessing: Shuffled.*
 
-*Base rainbow smoke algorithm output - 8-bit colour spectrum with perlin noise.*
+![Base Rainbow Smoke Algorithm](./Media/Base.gif)
 
-![to-do](to-do.gif)
 
-*Rainbow smoke using the following gif as preprocessed pixel colours.*
+*Rainbow smoke using the following gif as preprocessed pixel colours. Preprocessing: Shuffled.*
 
-![to-do](to-do.gif)
+![Output when using reference gif to generate colour dataset](./Media/ReferenceOutput.gif)
+![The gif that was used as input](./Media/Reference.gif)
 
-*The gif used in the previous output.*
 
-![to-do](to-do.gif)
+*Circle geometry template - also demonstrates 'Perlin noise' capability*
 
-*Rainbow smoke using circle geometry template.*
+![Example of circle geometry templating](./Media/Template.gif)
 
-![to-do](to-do.gif)
 
-*Rainbow smoke using multithreading.*
+*Stacking Resolution effect.*
+
+![Demonstration of stacking resolution technique](./Media/Stacking.gif)
+
+
+*Multithreading example with template effect. *
+
+![Demonstrating multithreading toggled on with the circle template](./Media/Multithread.gif)
 
 
 ## Usage

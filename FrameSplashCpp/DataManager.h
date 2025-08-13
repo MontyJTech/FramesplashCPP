@@ -1,10 +1,14 @@
 #ifndef DATA_MANAGER
 #define DATA_MANAGER
 
-#include <string>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <random>
+#include <algorithm>
+#include <execution>
+#include <vector>
+#include <numeric>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
@@ -12,6 +16,7 @@
 
 #include "Helper.h"
 #include "TemplateEngine.h"
+#include "Enums.h"
 
 using namespace cv;
 
@@ -26,17 +31,19 @@ private:
 	void parseFrame(cv::Mat frame);
 	Colour parseColourInput(std::string c);
 	std::pair<Colour, int> parseColourInputWithOccurance(std::string c);
-	Colour* getDefaultRGBData(int height, int width);
-	void randomiseParsedColours(int size);
+	Colour* getDefaultRGBData(int height, int width, ColourPreprocessing preprocessingType);
+	Colour* getCustomRGBData(int height, int width, ColourPreprocessing preprocessingType);
+	void randomiseParsedColours(size_t size, size_t blockSize = 10000);
 public:
 	DataManager();
 	void videoToFrames();
 	void framesToData();
 	void exportData();
-	Colour* importData(int height, int width);
-	Colour* getParsedData(int height, int width, std::string type = "rgb");
+	Colour* importDataAsRaw(int height, int width);
+	Colour* importDataByWeight(int height, int width);
+	Colour* getParsedData(int height, int width, ColourDataType type, ColourPreprocessing preprocessing);
 
-	int NumIndividualColours = 0;
+	size_t NumIndividualColours = 0;
 };
 
 #endif

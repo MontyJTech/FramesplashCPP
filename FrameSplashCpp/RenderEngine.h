@@ -27,8 +27,6 @@ private:
 	const int ix[8] = {0, -1, -1, -1, 0, 1, 1, 1};
 	const int iy[8] = {1, 1, 0, -1, -1, -1, 0, 1};
 
-
-
 	Colour* colourStack;
 	Pixel* fullGrid;
 	PixelDentch* fullDentchGrid;
@@ -38,10 +36,14 @@ private:
 
 	PixelManager pxMgr;
 	PerlinReader perlinReader;
-	bool PERLIN = false;
-	bool TEMPLATE = false;
+	bool PERLIN = true;
+	bool TEMPLATE = true;
 	bool AVERAGE = false;
-	bool PARALLEL = false;
+	bool PARALLEL = true;
+
+	bool STACKING_RESLUTION = false;
+	const int STACK_LAYERS = 4;
+	int stackLayers = 0;
 
 	int HEIGHT;
 	int WIDTH;
@@ -70,6 +72,7 @@ private:
 	void printMemoryAddress(Pixel *px, std::string msg = "");
 
 	PixelDentch* parallel_AvgMinDiff(Colour toCompare, int i);
+	PixelDentch* parallel_MinDiff(Colour toCompare, int i);
 
 	Pixel* findMinDiff(Colour toCompare, int i);
 	PixelDentch* findMinDiffDentch(Colour toCompare, int i);
@@ -79,10 +82,15 @@ private:
 
 	Pixel indexToXY(int index);
 	int colourDifference(Colour c1, Colour c2);
+
+	std::vector<PixelDentch*> GetCirclePoints(int centreX, int centreY, int radius);
+	std::vector<PixelDentch*> GetCanvasOutlinePoints();
+
 public:
 	void init(int h, int w, Colour* stack, std::string inputType = "rgb");
-	void runMainLoop();
-	void renderFrame(int count);
+	void initStackedCanvas(int multiplier);
+	void runMainLoop(int resolutionOffset = 0);
+	void renderFrame(int layer, int count);
 };
 
 #endif RENDER_ENGINE
